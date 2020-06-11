@@ -1,9 +1,11 @@
 import random
 import math
 import time
-import spotipy # add spotify playlist functionality later
+#import spotipy # add spotify playlist functionality later
 import copy
 from winsound import *
+import datetime
+import numpy as np
 
 exercises = {"Plank" : 30, "Grinder" : 20, "Normal Crunches" : 15, "Normal Situps" : 15, "In-N-Out": 15, "Leg Raise" : 15, "Leg Lift, Hip Up" : 15, "Up and Down Plank" : 10, "Straight Legs Up Crunches" : 15,
              "Cross Body Mountain Climber" : 45, "Russian Twists Slow" : 20, "Tip Toe Through The Tulips" : 60, "Plank With Hip Dips (side to side)": 20, "Mountain Climber" : 45, "Heel Tap" : 30,
@@ -11,6 +13,14 @@ exercises = {"Plank" : 30, "Grinder" : 20, "Normal Crunches" : 15, "Normal Situp
              "Crab Toe Touch" : 20}
 
 unseenExercises = copy.deepcopy(exercises)
+
+def totalWorkoutTime(fileName):
+    df = np.genfromtxt(fileName, delimiter=',')
+    if(df.ndim == 1): # check if it's one dimensional array, b/c first entry will make a file with only one row = 1d array
+        totalMins = df[0]
+    else:
+        totalMins = sum(df[:,0]) # sum all the entries in the first column
+    print("Total workout time: {} hours {} mins".format(totalMins // 60, totalMins % 60))
 
 def oneExercise(currentExercise, amount, lastExercise=False):
     global unseenExercises
@@ -52,6 +62,15 @@ def workout(mins):
         print("Exercise:  {} / {}".format(i+1, totalExercises))
         currentExercise, amount = oneExercise(currentExercise, amount, i+1 >= totalExercises)
 
+    # end of workout, track duration and date/time
+    file = open(".trackWorkouts.csv", "a")
+    dtNow = datetime.datetime.now()
+    file.write("{},{},{}\n".format(mins, dtNow.date(), dtNow.time()))
+    file.close()
+
+
 if __name__ == "__main__":
     mins = float(input("How many minutes would you like to work out for: "))
     workout(mins)
+    totalWorkoutTime(".trackWorkouts.csv")
+
