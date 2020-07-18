@@ -59,52 +59,50 @@ class Workout:
             tts = gTTS(exercise, lang='en')
             tts.save(self.exerciseToFile(exercise))
 
-    def oneExercise(self):
-        lastExercise = self.i + 1 >= self.totalExercises
-
+    def halfway(self):
         if self.i == math.ceil(self.totalExercises / 2):
             if self.textToSpeech:
                 mixer.music.load(self.exerciseToFile("Halfway done with workout"))
                 mixer.music.play()
             print("Halfway done with workout. {} second break".format(self.breakTime * 2))
             time.sleep(self.breakTime * 2)
-            PlaySound("endSound.wav", SND_FILENAME | SND_ASYNC)
 
-        time.sleep(self.breakTime)
+    def finalExercise(self, lastExercise):
+        if lastExercise:
+            if self.textToSpeech:  # todo change this
+                mixer.music.queue(self.exerciseToFile("Final Exercise"))
+                # mixer.music.play()
+            print("Final Exercise!")
+
+    def oneExercise(self):
+        lastExercise = self.i + 1 >= self.totalExercises
+
+        self.halfway()
 
         print("Exercise:  {} / {}".format(self.i + 1, self.totalExercises))
 
-        print("Current Exercise: {}".format(self.currentExercise))
-        if lastExercise and self.textToSpeech: #todo change this
-            mixer.music.load(self.exerciseToFile("Final Exercise"))
+        print("Next Exercise: {}\n".format(self.currentExercise))
+        if self.textToSpeech:
+            mixer.music.load(self.exerciseToFile("Next Exercise is {}".format(self.currentExercise)))
             mixer.music.play()
+
+        self.finalExercise(lastExercise)
+
+        time.sleep(self.breakTime)
+        PlaySound("endSound.wav", SND_FILENAME | SND_ASYNC)
         time.sleep(self.intervalTime)
 
         if not self.textToSpeech:
             PlaySound("endSound.wav", SND_FILENAME | SND_ASYNC)
 
-        if lastExercise:
-            if self.textToSpeech:
-                mixer.music.load(self.exerciseToFile("Finished workout. Good job."))
-                mixer.music.play()
-            print("Finished Workout! Good Job.")
-            return None
-        else:
+        if not lastExercise:
             print("Finished {}, {} second break.\n".format(self.currentExercise, self.breakTime))
 
             if len(self.unseenExercises) == 0:  # reset unseenExercises if you've visited them all
                 self.unseenExercises = copy.deepcopy(self.exercises)
 
-            nextExercise = random.choice(list(self.unseenExercises))
-            self.unseenExercises.remove(nextExercise)
-
-            print("Next Exercise: {}\n".format(nextExercise))
-            if self.textToSpeech:
-                mixer.music.load(self.exerciseToFile("Next Exercise is {}".format(nextExercise)))
-                mixer.music.play()
-            time.sleep(self.breakTime)
-            PlaySound("endSound.wav", SND_FILENAME | SND_ASYNC)
-            return nextExercise
+            self.currentExercise = random.choice(list(self.unseenExercises))
+            self.unseenExercises.remove(self.currentExercise)
 
     def trackTime(self):
         file = open(".trackWorkouts.csv", "a")
@@ -127,10 +125,14 @@ class Workout:
             mixer.music.load(self.exerciseToFile(self.currentExercise))
             mixer.music.play()
 
-        while(self.i < self.totalExercises):
+        while self.i < self.totalExercises:
             self.oneExercise()
             self.i += 1
 
+        if self.textToSpeech:
+            mixer.music.load(self.exerciseToFile("Finished workout. Good job."))
+            mixer.music.play()
+        print("Finished Workout! Good Job.")
 
         # end of workout, track duration and date/time
         self.trackTime()
