@@ -17,7 +17,7 @@ class Workout:
                  'Plank With Hip Dips (side to side)', 'Mountain Climber', 'Heel Tap',
                  'Bicycle Crunch', 'Scissor Drop (grinder going up and down)', 'Regular Pushups', 'Burpees',
                  'Reverse Lunge (non-jump)', 'Lunge Jumps', 'Jumping Jacks',
-                 'Crab Toe Touch', 'Wall Sit', 'V-Up', 'Side Plank Starfish (Left)', 'Side Plank Starfish (Right)'}
+                 'Crab Toe Touch', 'Wall Sit', 'V-Up', 'Side Plank Starfish (Left)', 'Side Plank Starfish (Right)', 'Easy Hold'}
 
     unseenExercises = copy.deepcopy(exercises)
 
@@ -141,12 +141,12 @@ class Workout:
         self.mins = -1
         while self.mins < 0:
             try:
-                self.mins = float(input("How many minutes would you like to work out for: "))
+                self.mins = float(input("How many minutes would you like to work out for (0 for full workout): "))
             except ValueError:
                 print("\tInvalid amount entered, try only using numbers.")
 
     def run(self):
-        # self.saveAllMP3()
+        #self.saveAllMP3()
         self.getInputMins()
         self.textToSpeech = input("Text to Speech (y/n):").lower() == 'y'
         self.entireWorkout()
