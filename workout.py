@@ -11,23 +11,43 @@ from pygame import mixer  # text to speech, play files
 
 
 class Workout:
-    exercises = {'Plank', 'Grinder', 'Normal Crunches', 'Normal Situps', 'In-N-Out', 'Leg Raise', 'Leg Lift, Hip Up',
-                 'Up and Down Plank', 'Straight Legs Up Crunches',
-                 'Cross Body Mountain Climber', 'Russian Twists Slow', 'Tip Toe Through The Tulips',
-                 'Plank With Hip Dips (side to side)', 'Mountain Climber', 'Heel Tap',
-                 'Bicycle Crunch', 'Scissor Drop (grinder going up and down)', 'Regular Pushups', 'Burpees',
-                 'Reverse Lunge (non-jump)', 'Lunge Jumps', 'Jumping Jacks',
-                 'Crab Toe Touch', 'Wall Sit', 'V-Up', 'Side Plank Starfish (Left)', 'Side Plank Starfish (Right)', 'Easy Hold'}
+    def __init__(self):
+        self.exercisesFull = {'Plank', 'Grinder', 'Normal Crunches', 'In-N-Out', 'Leg Raise',
+                     'Leg Lift, Hip Up',
+                     'Up and Down Plank', 'Straight Legs Up Crunches',
+                     'Cross Body Mountain Climber', 'Russian Twists Slow', 'Tip Toe Through The Tulips',
+                     'Plank With Hip Dips (side to side)', 'Mountain Climber', 'Heel Tap',
+                     'Bicycle Crunch', 'Scissor Drop (grinder going up and down)', 'Regular Pushups', 'Burpees',
+                     'Reverse Lunge (non-jump)', 'Lunge Jumps', 'Jumping Jacks',
+                     'Wall Sit', 'V-Up', 'Side Plank Starfish (Left)', 'Side Plank Starfish (Right)', 'Windmills', 
+                     'Easy Hold'}
 
-    unseenExercises = copy.deepcopy(exercises)
+        self.exercisesCore = {'Plank', 'Grinder', 'Normal Crunches', 'In-N-Out',
+                      'Leg Raise', 'Leg Lift, Hip Up', 'Up and Down Plank',
+                      'Straight Legs Up Crunches', 'Cross Body Mountain Climber',
+                      'Russian Twists Slow', 'Tip Toe Through The Tulips',
+                      'Plank With Hip Dips (side to side)', 'Mountain Climber', 'Heel Tap',
+                      'Bicycle Crunch', 'Scissor Drop (grinder going up and down)',
+                      'Regular Pushups', 'V-Up',
+                      'Side Plank Starfish (Left)', 'Side Plank Starfish (Right)', 'Easy Hold'}
 
-    textToSpeech = False
-    intervalTime = 30
-    breakTime = 5
-    totalExercises = 0
-    i = 0
-    mins = 0
-    currentExercise = ""
+        self.doubleExercises = {'Side Plank Starfish (Left)': 'Side Plank Starfish (Right)', 'Side Plank Starfish (Right)': 'Side Plank Starfish (Left)'}
+
+        self.pureCore = False  # True for only doing core exercises
+        self.exercises = {}
+        if self.pureCore:
+            self.exercises = self.exercisesCore
+        else:
+            self.exercises = self.exercisesFull
+            
+        self.unseenExercises = copy.deepcopy(self.exercises)
+
+        self.intervalTime = 30
+        self.breakTime = 5
+        self.totalExercises = 0
+        self.i = 0  # Number of exercises completed
+        self.mins = 0
+        self.currentExercise = ""
 
     @staticmethod
     def totalWorkoutTime(fileName):
@@ -36,7 +56,7 @@ class Workout:
             totalMins = df[0]
         else:
             totalMins = sum(df[:, 0])  # sum all the entries in the first column
-        print("Total workout time: {} hours {} mins".format(totalMins // 60, totalMins % 60))
+        print("Total workout time: {} hours {:.1f} mins".format(totalMins // 60, totalMins % 60))
 
     @staticmethod
     def exerciseToFile(exercise):
@@ -60,18 +80,15 @@ class Workout:
             tts.save(self.exerciseToFile(exercise))
 
     def halfway(self):
-        if self.i == math.ceil(self.totalExercises / 2):
-            if self.textToSpeech:
-                mixer.music.load(self.exerciseToFile("Halfway done with workout"))
-                mixer.music.play()
-            print("Halfway done with workout. {} second break".format(self.breakTime * 2))
-            time.sleep(self.breakTime * 2)
+        if self.mins > 8 and self.i == math.ceil(self.totalExercises / 2):
+            mixer.music.load(self.exerciseToFile("Halfway done with workout"))
+            mixer.music.play()
+            print("Halfway done with workout. {} second break".format(self.breakTime * 4))
+            time.sleep(self.breakTime * 4)
 
     def finalExercise(self, lastExercise):
         if lastExercise:
-            if self.textToSpeech:  # todo change this
-                mixer.music.queue(self.exerciseToFile("Final Exercise"))
-                # mixer.music.play()
+            mixer.music.queue(self.exerciseToFile("Final Exercise"))
             print("Final Exercise!")
 
     def oneExercise(self):
@@ -82,9 +99,8 @@ class Workout:
         print("Exercise:  {} / {}".format(self.i + 1, self.totalExercises))
 
         print("Next Exercise: {}\n".format(self.currentExercise))
-        if self.textToSpeech:
-            mixer.music.load(self.exerciseToFile("Next Exercise is {}".format(self.currentExercise)))
-            mixer.music.play()
+        mixer.music.load(self.exerciseToFile("Next Exercise is {}".format(self.currentExercise)))
+        mixer.music.play()
 
         self.finalExercise(lastExercise)
 
@@ -92,23 +108,26 @@ class Workout:
         PlaySound("endSound.wav", SND_FILENAME | SND_ASYNC)
         time.sleep(self.intervalTime)
 
-        if not self.textToSpeech:
-            PlaySound("endSound.wav", SND_FILENAME | SND_ASYNC)
-
         if not lastExercise:
             print("Finished {}, {} second break.\n".format(self.currentExercise, self.breakTime))
 
-            if len(self.unseenExercises) == 0:  # reset unseenExercises if you've visited them all
-                self.unseenExercises = copy.deepcopy(self.exercises)
-
-            self.currentExercise = random.choice(list(self.unseenExercises))
-            self.unseenExercises.remove(self.currentExercise)
+            self.getNextExercise()
 
     def trackTime(self):
         file = open(".trackWorkouts.csv", "a")
         dtNow = datetime.datetime.now()
         file.write("{},{},{}\n".format(self.mins, dtNow.date(), dtNow.time()))
         file.close()
+
+    def getNextExercise(self):
+        "Gets the next exercise and removes it from unseen exercises"
+        if len(self.unseenExercises) == 0:  # reset unseenExercises if you've visited them all
+            self.unseenExercises = copy.deepcopy(self.exercises)
+        elif self.currentExercise in self.doubleExercises.keys() and self.doubleExercises[self.currentExercise] in self.unseenExercises:
+            self.currentExercise = self.doubleExercises[self.currentExercise]
+        else:
+            self.currentExercise = random.choice(list(self.unseenExercises))
+        self.unseenExercises.remove(self.currentExercise)
 
     def entireWorkout(self):
         if self.mins == 0:  # If you want to do the entire exercise set, enter 0 for the time
@@ -117,21 +136,18 @@ class Workout:
         else:
             self.totalExercises = math.ceil(self.mins * 60 / (self.intervalTime + self.breakTime))
 
-        self.currentExercise = random.choice(list(self.unseenExercises))
-        self.unseenExercises.remove(self.currentExercise)
+        self.getNextExercise()
 
-        if self.textToSpeech:
-            mixer.init()
-            mixer.music.load(self.exerciseToFile(self.currentExercise))
-            mixer.music.play()
+        mixer.init()
+        mixer.music.load(self.exerciseToFile(self.currentExercise))
+        mixer.music.play()
 
         while self.i < self.totalExercises:
             self.oneExercise()
             self.i += 1
 
-        if self.textToSpeech:
-            mixer.music.load(self.exerciseToFile("Finished workout. Good job."))
-            mixer.music.play()
+        mixer.music.load(self.exerciseToFile("Finished workout. Good job."))
+        mixer.music.play()
         print("Finished Workout! Good Job.")
 
         # end of workout, track duration and date/time
@@ -146,9 +162,8 @@ class Workout:
                 print("\tInvalid amount entered, try only using numbers.")
 
     def run(self):
-        #self.saveAllMP3()
+        #self.saveAllMP3() # comment out after done once
         self.getInputMins()
-        self.textToSpeech = input("Text to Speech (y/n):").lower() == 'y'
         self.entireWorkout()
         self.totalWorkoutTime(".trackWorkouts.csv")
 
