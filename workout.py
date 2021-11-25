@@ -3,15 +3,12 @@ import math
 import time
 # import spotipy # add spotify playlist functionality later
 import copy
-from winsound import *
 import datetime
 import numpy as np
-from gtts import gTTS  # text to speech, create files
-from pygame import mixer  # text to speech, play files
-
+from playsound import playsound
 
 class Workout:
-    def __init__(self):
+    def __init__(self, intervalTime=30, breakTime=5, pureCore=False):
         self.exercisesFull = {'Plank', 'Grinder', 'Normal Crunches', 'In-N-Out', 'Leg Raise',
                      'Leg Lift, Hip Up',
                      'Up and Down Plank', 'Straight Legs Up Crunches',
@@ -33,7 +30,7 @@ class Workout:
 
         self.doubleExercises = {'Side Plank Starfish (Left)': 'Side Plank Starfish (Right)', 'Side Plank Starfish (Right)': 'Side Plank Starfish (Left)'}
 
-        self.pureCore = False  # True for only doing core exercises
+        self.pureCore = pureCore  # True for only doing core exercises
         self.exercises = {}
         if self.pureCore:
             self.exercises = self.exercisesCore
@@ -42,8 +39,8 @@ class Workout:
             
         self.unseenExercises = copy.deepcopy(self.exercises)
 
-        self.intervalTime = 30
-        self.breakTime = 5
+        self.intervalTime = intervalTime
+        self.breakTime = breakTime
         self.totalExercises = 0
         self.i = 0  # Number of exercises completed
         self.mins = 0
@@ -63,6 +60,8 @@ class Workout:
         return "mp3s/" + exercise + ".mp3"
 
     def saveAllMP3(self):
+        from gtts import gTTS  # text to speech, create files
+
         tts = gTTS("Halfway done with workout", lang='en')
         tts.save(self.exerciseToFile("Halfway done with workout"))
 
@@ -81,14 +80,12 @@ class Workout:
 
     def halfway(self):
         if self.mins > 8 and self.i == math.ceil(self.totalExercises / 2):
-            mixer.music.load(self.exerciseToFile("Halfway done with workout"))
-            mixer.music.play()
+            playsound(self.exerciseToFile("Halfway done with workout"))
             print("Halfway done with workout. {} second break".format(self.breakTime * 4))
             time.sleep(self.breakTime * 4)
 
     def finalExercise(self, lastExercise):
         if lastExercise:
-            mixer.music.queue(self.exerciseToFile("Final Exercise"))
             print("Final Exercise!")
 
     def oneExercise(self):
@@ -99,13 +96,12 @@ class Workout:
         print("Exercise:  {} / {}".format(self.i + 1, self.totalExercises))
 
         print("Next Exercise: {}\n".format(self.currentExercise))
-        mixer.music.load(self.exerciseToFile("Next Exercise is {}".format(self.currentExercise)))
-        mixer.music.play()
-
+        playsound(self.exerciseToFile("Next Exercise is {}".format(self.currentExercise)))
+        
         self.finalExercise(lastExercise)
 
         time.sleep(self.breakTime)
-        PlaySound("endSound.wav", SND_FILENAME | SND_ASYNC)
+        playsound("endSound.wav")
         time.sleep(self.intervalTime)
 
         if not lastExercise:
@@ -137,17 +133,14 @@ class Workout:
             self.totalExercises = math.ceil(self.mins * 60 / (self.intervalTime + self.breakTime))
 
         self.getNextExercise()
-
-        mixer.init()
-        mixer.music.load(self.exerciseToFile(self.currentExercise))
-        mixer.music.play()
+       
 
         while self.i < self.totalExercises:
             self.oneExercise()
             self.i += 1
 
-        mixer.music.load(self.exerciseToFile("Finished workout. Good job."))
-        mixer.music.play()
+        
+        playsound(self.exerciseToFile("Finished workout. Good job."))
         print("Finished Workout! Good Job.")
 
         # end of workout, track duration and date/time
@@ -169,5 +162,8 @@ class Workout:
 
 
 if __name__ == "__main__":
-    workout = Workout()
+    intervalTime = 30 # seconds for each exercise
+    breakTime = 5 # seconds for each break
+    pureCore = True # only do core exercsies no jumping jacks etc.
+    workout = Workout(intervalTime, breakTime, pureCore)
     workout.run()

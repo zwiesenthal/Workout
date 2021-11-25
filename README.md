@@ -9,10 +9,9 @@ This is a core workout program that uses 30 second intervals and 5 second transi
   It logs your workout progress at the end of each workout in ".trackWorkouts.csv".
 
 # Required:
-Windows 10 for Winsound, if you don't care about audio, you can comment out the lines that say PlaySound().
 
-pygame - pip install pygame (Used for playing mp3 files)
+playsound - pip install playsound==1.2.2 (Play mp3 files)
 
-numpy - pip install numpy (Used for tracking your workouts over time)
+numpy - pip install numpy (Track your workouts over time)
 
 gtts - pip install gtts (Google Text to Speech)
