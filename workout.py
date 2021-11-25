@@ -87,6 +87,7 @@ class Workout:
     def finalExercise(self, lastExercise):
         if lastExercise:
             print("Final Exercise!")
+            playsound(self.exerciseToFile("Final Exercise"))
 
     def oneExercise(self):
         lastExercise = self.i + 1 >= self.totalExercises
